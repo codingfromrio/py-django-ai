@@ -4,7 +4,7 @@ from django.contrib.messages import constants
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib import auth
-
+from django.contrib.auth.decorators import user_passes_test
 
 def cadastro(request):
     if request.method == 'GET':
@@ -34,7 +34,6 @@ def cadastro(request):
 
         return redirect('/usuarios/login')
 
-
 def login(request):
     if request.method == 'GET':
         return render(request, 'login.html')
@@ -50,3 +49,20 @@ def login(request):
         
         messages.add_message(request, constants.ERROR, 'Username ou senha inválidos.')
         return redirect('login')
+
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def permissoes(request):
+    users = User.objects.filter(is_superuser = False)
+    return render(request, 'permissoes.html', {'users': users})
+
+
+from rolepermissions.roles import assign_role
+
+def tornar_gerente(request, id):
+    #if not request.user.is_superuser:
+    #    raise Http404()
+    user = User.objects.get(id=id)
+    assign_role(user, 'gerente')
+    return redirect('permissoes')
